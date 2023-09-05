@@ -5,7 +5,7 @@ use serde::de::{
     Unexpected, VariantAccess, Visitor,
 };
 
-use crate::ser::Value;
+use crate::ser::{Value, StructValueKey};
 
 #[cfg(test)]
 mod test;
@@ -31,8 +31,6 @@ impl Value {
             Value::Int32(n) => Unexpected::Signed(*n as i64),
             Value::Int64(n) => Unexpected::Signed(*n),
             Value::String(s) => Unexpected::Str(s),
-            Value::StructKey(_s) => Unexpected::Other("struct field name"),
-            Value::StructVariantKey(_s) => Unexpected::Other("struct variant"),
             Value::Unit => Unexpected::Unit,
             Value::Option(_) => Unexpected::Option,
             Value::Array(_) => Unexpected::Seq,
@@ -482,7 +480,7 @@ where
 struct EnumDeserializer {
     variant: String,
     value: Vec<Value>,
-    tree: BTreeMap<Value, Value>,
+    tree: BTreeMap<StructValueKey, Value>,
 }
 
 impl EnumDeserializer {
@@ -493,7 +491,7 @@ impl EnumDeserializer {
             tree: BTreeMap::new(),
         }
     }
-    fn from_map(variant: String, tree: BTreeMap<Value, Value>) -> Self {
+    fn from_map(variant: String, tree: BTreeMap<StructValueKey, Value>) -> Self {
         Self {
             variant,
             value: vec![],
@@ -521,7 +519,7 @@ impl<'de> EnumAccess<'de> for EnumDeserializer {
 
 struct VariantDeserializer {
     value: Vec<Value>,
-    tree: BTreeMap<Value, Value>,
+    tree: BTreeMap<StructValueKey, Value>,
 }
 
 impl<'de> VariantAccess<'de> for VariantDeserializer {
@@ -574,12 +572,12 @@ impl<'de> VariantAccess<'de> for VariantDeserializer {
 }
 
 struct MapDeserializer {
-    iter: <BTreeMap<Value, Value> as IntoIterator>::IntoIter,
+    iter: <BTreeMap<StructValueKey, Value> as IntoIterator>::IntoIter,
     value: Option<Value>,
 }
 
 impl MapDeserializer {
-    fn new(map: BTreeMap<Value, Value>) -> Self {
+    fn new(map: BTreeMap<StructValueKey, Value>) -> Self {
         MapDeserializer {
             iter: map.into_iter(),
             value: None,
@@ -622,12 +620,12 @@ impl<'de> MapAccess<'de> for MapDeserializer {
 }
 
 struct MapRefDeserializer<'de> {
-    iter: <&'de BTreeMap<Value, Value> as IntoIterator>::IntoIter,
+    iter: <&'de BTreeMap<StructValueKey, Value> as IntoIterator>::IntoIter,
     value: Option<&'de Value>,
 }
 
 impl<'de> MapRefDeserializer<'de> {
-    fn new(map: &'de BTreeMap<Value, Value>) -> Self {
+    fn new(map: &'de BTreeMap<StructValueKey, Value>) -> Self {
         MapRefDeserializer {
             iter: map.into_iter(),
             value: None,

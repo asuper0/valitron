@@ -65,10 +65,10 @@ fn test_struct() {
         Value::Struct({
             let mut map = BTreeMap::new();
             map.insert(
-                Value::StructKey("name".to_string()),
+                StructValueKey::StructKey("name".to_string()),
                 Value::String("wang".into()),
             );
-            map.insert(Value::StructKey("age".to_string()), Value::UInt8(18));
+            map.insert(StructValueKey::StructKey("age".to_string()), Value::UInt8(18));
             map
         })
     )
@@ -104,17 +104,17 @@ fn test_struct_nest() {
         value,
         Value::Struct({
             let mut map = BTreeMap::new();
-            map.insert(Value::StructKey("foo".to_string()), Value::UInt8(11));
+            map.insert(StructValueKey::StructKey("foo".to_string()), Value::UInt8(11));
             map.insert(
-                Value::StructKey("b".to_string()),
+                StructValueKey::StructKey("b".to_string()),
                 Value::Struct({
                     let mut map = BTreeMap::new();
                     map.insert(
-                        Value::StructKey("foo_str".to_string()),
+                        StructValueKey::StructKey("foo_str".to_string()),
                         Value::String("bar".to_string()),
                     );
                     map.insert(
-                        Value::StructKey("c".to_string()),
+                        StructValueKey::StructKey("c".to_string()),
                         Value::NewtypeStruct(vec![Value::UInt8(37)]),
                     );
                     map
@@ -146,7 +146,7 @@ fn test_newtype_variant() {
             "A",
             vec![Value::Struct({
                 let mut map = BTreeMap::new();
-                map.insert(Value::StructKey("age".to_string()), Value::UInt8(10));
+                map.insert(StructValueKey::StructKey("age".to_string()), Value::UInt8(10));
                 map
             })]
         )
@@ -162,7 +162,7 @@ fn test_newtype_variant() {
                 Value::UInt8(11),
                 Value::Struct({
                     let mut map = BTreeMap::new();
-                    map.insert(Value::StructKey("age".to_string()), Value::UInt8(10));
+                    map.insert(StructValueKey::StructKey("age".to_string()), Value::UInt8(10));
                     map
                 })
             ]
@@ -199,15 +199,25 @@ fn test_int() {
         value,
         Value::Struct({
             let mut map = BTreeMap::new();
-            map.insert(Value::StructKey("v1".to_string()), Value::UInt8(u8::MAX));
-            map.insert(Value::StructKey("v2".to_string()), Value::UInt16(u16::MAX));
-            map.insert(Value::StructKey("v3".to_string()), Value::UInt32(u32::MAX));
-            map.insert(Value::StructKey("v4".to_string()), Value::UInt64(u64::MAX));
-            map.insert(Value::StructKey("v5".to_string()), Value::Int8(i8::MIN));
-            map.insert(Value::StructKey("v6".to_string()), Value::Int16(i16::MIN));
-            map.insert(Value::StructKey("v7".to_string()), Value::Int32(i32::MIN));
-            map.insert(Value::StructKey("v8".to_string()), Value::Int64(i64::MIN));
+            map.insert(StructValueKey::StructKey("v1".to_string()), Value::UInt8(u8::MAX));
+            map.insert(StructValueKey::StructKey("v2".to_string()), Value::UInt16(u16::MAX));
+            map.insert(StructValueKey::StructKey("v3".to_string()), Value::UInt32(u32::MAX));
+            map.insert(StructValueKey::StructKey("v4".to_string()), Value::UInt64(u64::MAX));
+            map.insert(StructValueKey::StructKey("v5".to_string()), Value::Int8(i8::MIN));
+            map.insert(StructValueKey::StructKey("v6".to_string()), Value::Int16(i16::MIN));
+            map.insert(StructValueKey::StructKey("v7".to_string()), Value::Int32(i32::MIN));
+            map.insert(StructValueKey::StructKey("v8".to_string()), Value::Int64(i64::MIN));
             map
         })
     )
+
+}
+
+fn aa<T: Ord>(a:T, b:T) -> bool {
+    a==b
+}
+
+fn _bb() {
+    let c = aa(3, 2);
+    println!("{}",c);
 }

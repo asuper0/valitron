@@ -8,6 +8,12 @@ use crate::register::{FieldName, FieldNames};
 mod test;
 
 #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
+pub enum StructValueKey{
+    StructKey(String),
+    StructVariantKey(String),
+}
+
+#[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub enum Value {
     UInt8(u8),
     Int8(i8),
@@ -33,15 +39,13 @@ pub enum Value {
     EnumUnit(&'static str),
     TupleVariant(&'static str, Vec<Value>),
 
-    Map(BTreeMap<Value, Value>),
+    Map(BTreeMap<StructValueKey, Value>),
 
-    StructKey(String),
     /// the BtreeMap key only be StructKey(_)
-    Struct(BTreeMap<Value, Value>),
+    Struct(BTreeMap<StructValueKey, Value>),
 
-    StructVariantKey(String),
     /// the BtreeMap key only be StructVariantKey(_)
-    StructVariant(&'static str, BTreeMap<Value, Value>),
+    StructVariant(&'static str, BTreeMap<StructValueKey, Value>),
 }
 
 pub struct ValueMap {
@@ -90,10 +94,10 @@ impl Value {
             | (FieldName::Tuple(i), Value::Enum(_, vec))
             | (FieldName::Tuple(i), Value::TupleVariant(_, vec)) => vec.get(*i as usize),
             (FieldName::Literal(str), Value::Struct(btree)) => {
-                btree.get(&Value::StructKey(str.to_string()))
+                btree.get(&StructValueKey::StructKey(str.to_string()))
             }
             (FieldName::StructVariant(str), Value::StructVariant(_, btree)) => {
-                btree.get(&Value::StructVariantKey(str.to_string()))
+                btree.get(&StructValueKey::StructVariantKey(str.to_string()))
             }
             _ => None,
         }
@@ -117,10 +121,10 @@ impl Value {
             | (FieldName::Tuple(i), Value::Enum(_, vec))
             | (FieldName::Tuple(i), Value::TupleVariant(_, vec)) => vec.get_mut(*i as usize),
             (FieldName::Literal(str), Value::Struct(btree)) => {
-                btree.get_mut(&Value::StructKey(str.to_string()))
+                btree.get_mut(&StructValueKey::StructKey(str.to_string()))
             }
             (FieldName::StructVariant(str), Value::StructVariant(_, btree)) => {
-                btree.get_mut(&Value::StructVariantKey(str.to_string()))
+                btree.get_mut(&StructValueKey::StructVariantKey(str.to_string()))
             }
             _ => None,
         }
@@ -138,14 +142,14 @@ impl Value {
 
     pub(crate) fn get(&self, key: &str) -> Option<&Value> {
         if let Self::Struct(map) = self {
-            map.get(&Value::StructKey(key.to_string()))
+            map.get(&StructValueKey::StructKey(key.to_string()))
         } else {
             None
         }
     }
     pub(crate) fn get_mut(&mut self, key: &str) -> Option<&mut Value> {
         if let Self::Struct(map) = self {
-            map.get_mut(&Value::StructKey(key.to_string()))
+            map.get_mut(&StructValueKey::StructKey(key.to_string()))
         } else {
             None
         }
@@ -453,7 +457,7 @@ impl ser::SerializeTupleStruct for SerializeTupleStruct {
         Ok(Value::TupleStruct(self.0))
     }
 }
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct SerializeTupleVariant {
     variant: &'static str,
     map: Vec<Value>,
@@ -491,7 +495,7 @@ impl ser::SerializeTupleVariant for SerializeTupleVariant {
 }
 
 pub(crate) struct SerializeMap {
-    map: BTreeMap<Value, Value>,
+    map: BTreeMap<StructValueKey, Value>,
     next_key: Option<Value>,
 }
 
@@ -532,8 +536,8 @@ impl ser::SerializeMap for SerializeMap {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) struct SerializeStruct(BTreeMap<Value, Value>);
+#[derive(Debug, PartialEq)]
+pub(crate) struct SerializeStruct(BTreeMap<StructValueKey, Value>);
 impl ser::SerializeStruct for SerializeStruct {
     type Error = MyErr;
     type Ok = Value;
@@ -547,7 +551,7 @@ impl ser::SerializeStruct for SerializeStruct {
         T: serde::Serialize,
     {
         self.0.insert(
-            Value::StructKey(key.to_string()),
+            StructValueKey::StructKey(key.to_string()),
             value.serialize(Serializer)?,
         );
 
@@ -559,10 +563,10 @@ impl ser::SerializeStruct for SerializeStruct {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct SerializeStructVariant {
     variant: &'static str,
-    map: BTreeMap<Value, Value>,
+    map: BTreeMap<StructValueKey, Value>,
 }
 
 impl SerializeStructVariant {
@@ -586,7 +590,7 @@ impl ser::SerializeStructVariant for SerializeStructVariant {
         T: serde::Serialize,
     {
         self.map.insert(
-            Value::StructVariantKey(key.to_string()),
+            StructValueKey::StructVariantKey(key.to_string()),
             value.serialize(Serializer)?,
         );
         Ok(())
